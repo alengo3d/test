@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets API</title>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+</head>
+<body>
+    <h1>Google Sheets API Example</h1>
+
+    <!-- Поле для ввода API Key -->
+    <label for="apiKeyInput">Введите API Key:</label>
+    <input type="text" id="apiKeyInput" placeholder="Введите ваш API Key" />
+    <button id="submitApiKeyButton">Подтвердить API Key</button>
+
+    <br><br>
+
+    <!-- Кнопка для загрузки данных -->
+    <button id="load_data_button" style="display: none;">Загрузить данные</button>
+
+    <h2>Данные из Google Таблицы:</h2>
+    <pre id="content">Нажмите кнопку "Загрузить данные" для отображения содержимого таблицы.</pre>
+
+    <script>
+        let API_KEY = '';  // Переменная для хранения API Key
+        const SPREADSHEET_ID = '1HBWYo35ELA1jOWtSHo3hhLSQ6zG5kAO5ycxrkWWPhOI';  // Ваш ID таблицы
+        const RANGE = 'data!A1:D100';  // Диапазон данных на листе "data"
+
+        // Инициализация клиента Google API
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+            }).then(() => {
+                console.log("Google API client initialized.");
+                // Показать кнопку для загрузки данных
+                document.getElementById('load_data_button').style.display = 'inline-block';
+            }, (error) => {
+                console.error("Error initializing Google API client:", error);
+                alert('Ошибка инициализации API. Пожалуйста, проверьте API Key.');
+            });
+        }
+
+        // Функция для загрузки данных из таблицы через Google Sheets API
+        function loadSheetData() {
+            gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: SPREADSHEET_ID,
+                range: RANGE,
+            }).then((response) => {
+                const data = response.result.values;
+                if (data && data.length > 0) {
+                    const formattedData = data.map(row => row.join(', ')).join('\n');
+                    document.getElementById('content').textContent = formattedData;
+                } else {
+                    document.getElementById('content').textContent = 'Данные не найдены.';
+                }
+            }).catch((error) => {
+                console.error("Error fetching data from Google Sheets:", error);
+                document.getElementById('content').textContent = 'Ошибка при загрузке данных.';
+            });
+        }
+
+        // Загрузка Google API
+        function start() {
+            gapi.load('client', initClient);
+        }
+
+        // Обработчик для ввода API Key
+        document.getElementById('submitApiKeyButton').addEventListener('click', function() {
+            // Получаем API Key из поля ввода
+            API_KEY = document.getElementById('apiKeyInput').value;
+            
+            // Проверяем, что API Key введен
+            if (API_KEY) {
+                start();  // Инициализируем клиент с введенным API Key
+            } else {
+                alert('Пожалуйста, введите ваш API Key');
+            }
+        });
+
+        // Добавляем обработчик для кнопки загрузки данных после загрузки страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('load_data_button').addEventListener('click', loadSheetData);
+        });
+    </script>
+</body>
+</html>
